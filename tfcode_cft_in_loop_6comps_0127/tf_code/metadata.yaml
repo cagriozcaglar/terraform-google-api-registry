@@ -1,0 +1,134 @@
+apiVersion: blueprints.cloud.google.com/v1alpha1
+kind: BlueprintMetadata
+metadata:
+  name: terraform-google-api-gateway
+  annotations:
+    config.kubernetes.io/local-config: "true"
+spec:
+  info:
+    title: Google Cloud API Gateway
+    source:
+      repo: https://github.com/GoogleCloudPlatform/terraform-google-api-gateway.git
+      sourceType: git
+    version: 1.0.0
+    actuationTool:
+      flavor: terraform
+      version: ">= 1.3"
+    description:
+      tagline: A Terraform module to deploy a managed API Gateway on Google Cloud.
+      detailed: This module simplifies the deployment of Google Cloud API Gateway, including the API, API Config, and the Gateway itself. It handles enabling necessary APIs and configuring IAM permissions for backend service invocation.
+    icon: https://cloud.google.com/images/products/api-gateway/api-gateway.svg
+  content:
+    requirements:
+      roles:
+        - level: project
+          role: roles/apigateway.admin
+        - level: project
+          role: roles/serviceusage.serviceUsageAdmin
+        - level: project
+          role: roles/iam.serviceAccountUser
+      services:
+        - apigateway.googleapis.com
+        - servicemanagement.googleapis.com
+        - servicecontrol.googleapis.com
+        - iam.googleapis.com
+  interface:
+    variables:
+      - name: api_config_display_name
+        description: A user-visible name for the API config.
+        type: string
+        required: false
+        default: API Gateway Config
+      - name: api_config_id_prefix
+        description: The prefix for the API config ID. A unique ID will be generated.
+        type: string
+        required: false
+        default: api-config-
+      - name: api_display_name
+        description: A user-visible name for the API.
+        type: string
+        required: false
+        default: API Gateway API
+      - name: api_id
+        description: The identifier for the API. Must be unique within the project. Required if openapi_documents is not an empty list.
+        type: string
+        required: false
+        default: null
+      - name: enable_apis
+        description: When true, the necessary APIs for API Gateway will be enabled. Set to false if they are already enabled.
+        type: bool
+        required: false
+        default: true
+      - name: gateway_display_name
+        description: A user-visible name for the Gateway.
+        type: string
+        required: false
+        default: API Gateway
+      - name: gateway_id
+        description: The identifier for the Gateway. Must be unique within the project and region. Required if openapi_documents is not an empty list.
+        type: string
+        required: false
+        default: null
+      - name: gateway_service_account
+        description: The service account email to be used by the gateway to invoke backend services. The service account must be in the same project as the gateway. If it is not provided, the gateway will use the default App Engine service account.
+        type: string
+        required: false
+        default: null
+      - name: labels
+        description: Resource labels to represent user-provided metadata. These are applied to the API and Gateway resources.
+        type: map(string)
+        required: false
+        default: {}
+      - name: openapi_documents
+        description: A JSON-encoded list of OpenAPI documents for the API config. Each document object in the list must have a 'path' and base64-encoded 'contents'. An empty list ('[]') will disable the creation of the gateway.
+        type: string
+        required: false
+        default: "[]"
+      - name: project_id
+        description: The ID of the Google Cloud project where the API Gateway will be created. If not provided, the provider project is used.
+        type: string
+        required: false
+        default: null
+      - name: region
+        description: The Google Cloud region where the Gateway will be created. If not provided, the provider region is used. Required if openapi_documents is not an empty list.
+        type: string
+        required: false
+        default: null
+    variableGroups:
+      - name: Core Gateway Configuration
+        description: "Core identifiers for the project, region, API, and Gateway. These are required to create the gateway."
+        variables:
+          - project_id
+          - region
+          - api_id
+          - gateway_id
+      - name: OpenAPI Specification
+        description: The OpenAPI specification that defines your API. The gateway will not be created if this is empty.
+        variables:
+          - openapi_documents
+      - name: Display and Labeling
+        description: User-friendly names and metadata for the created resources.
+        variables:
+          - api_display_name
+          - api_config_display_name
+          - gateway_display_name
+          - labels
+      - name: Advanced Configuration
+        description: Advanced settings for service accounts, API enablement, and resource naming.
+        variables:
+          - api_config_id_prefix
+          - gateway_service_account
+          - enable_apis
+    outputs:
+      - name: api_config_id
+        description: The full resource ID of the API config.
+      - name: api_id
+        description: The unique identifier for the created API.
+      - name: api_name
+        description: The full resource name of the API.
+      - name: default_hostname
+        description: The default hostname for the gateway.
+      - name: gateway_id
+        description: The full resource ID of the Gateway.
+      - name: gateway_name
+        description: The full resource name of the Gateway.
