@@ -1,0 +1,106 @@
+apiVersion: blueprints.cloud.google.com/v1alpha1
+kind: BlueprintMetadata
+metadata:
+  name: terraform-google-api-gateway
+  source:
+    type: git
+    location: https://github.com/GoogleCloudPlatform/terraform-google-api-gateway.git
+spec:
+  info:
+    title: Google Cloud API Gateway Module
+    version: 1.0.0
+    actuationTool:
+      type: Terraform
+      version: ">= 1.0"
+    description:
+      tagline: Manages APIs, API configurations, and gateways in Google Cloud API Gateway.
+      detailed: The API Registry module is responsible for creating and managing APIs, API configurations, and gateways within Google Cloud API Gateway. It provides a flexible interface to define APIs from OpenAPI specifications, deploy them to publicly accessible endpoints, and manage different versions or configurations simultaneously.
+    icon: ""
+    diagrams: []
+    documentations: []
+    examples: []
+  content:
+    variables:
+    - name: api_configs
+      description: A map of API configurations and their associated gateways to create.
+        The key of each object is a logical name for the configuration. Each configuration
+        object supports the following attributes: `display_name` (string, required),
+        `openapi_spec_path` (string, optional), `openapi_spec_contents` (string, optional),
+        `gateway_id` (string, required), `gateway_display_name` (string, optional),
+        `gateway_labels` (map(string), optional), `gateway_service_account` (string,
+        optional). Exactly one of `openapi_spec_path` or `openapi_spec_contents` must
+        be specified for each configuration.
+      type: map(object({ display_name = string, openapi_spec_path = optional(string),
+        openapi_spec_contents = optional(string), gateway_id = string, gateway_display_name
+        = optional(string), gateway_labels = optional(map(string), {}), gateway_service_account
+        = optional(string) }))
+      required: false
+      default: {}
+    - name: api_id
+      description: A unique identifier for the top-level API.
+      type: string
+      required: true
+      default: null
+    - name: display_name
+      description: The display name of the API. Defaults to the value of `api_id`.
+      type: string
+      required: false
+      default: null
+    - name: labels
+      description: A map of labels to apply to the API resource.
+      type: map(string)
+      required: false
+      default: {}
+    - name: project_id
+      description: The project ID to host the API Gateway resources.
+      type: string
+      required: true
+      default: null
+    - name: region
+      description: The region for the gateways.
+      type: string
+      required: true
+      default: null
+    variableGroups:
+    - name: "Project and Location"
+      description: "Settings for the GCP Project and region."
+      variables:
+      - project_id
+      - region
+    - name: "API Settings"
+      description: "Core settings for the API resource."
+      variables:
+      - api_id
+      - display_name
+      - labels
+    - name: "API Configurations and Gateways"
+      description: "Define one or more API configurations and the gateways that serve them."
+      variables:
+      - api_configs
+    outputs:
+    - name: api_configs
+      description: A map of the created API configs, keyed by the logical name provided
+        in the input variable. Each value contains the config's full name and ID.
+    - name: api_gateway_service_agent
+      description: The service agent email for the API Gateway service. This identity
+        is used to invoke GCP backends (e.g., Cloud Functions, Cloud Run) and requires
+        appropriate IAM permissions (e.g., roles/run.invoker).
+    - name: api_id
+      description: The unique identifier of the created API.
+    - name: api_name
+      description: The full resource name of the API in the format `projects/*/locations/global/apis/*`.
+    - name: gateways
+      description: A map of the created gateways, keyed by the logical name provided
+        in the input variable. Each value contains the gateway's ID and default hostname.
+  requirements:
+    roles:
+    - level: Project
+      roles:
+      - roles/apigateway.admin
+      - roles/iam.serviceAccountUser
+      - roles/resourcemanager.projectIamAdmin
+      - roles/serviceusage.serviceUsageAdmin
+    services:
+    - apigateway.googleapis.com
+    - cloudresourcemanager.googleapis.com
+    - serviceusage.googleapis.com
